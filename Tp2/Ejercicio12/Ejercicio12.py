@@ -9,17 +9,22 @@ class articulo:
         self.autor = " ".join(autor.strip().title().split())
         self.texto = texto.strip()  
 
-    def to_html(self):
-       texto_corto=self.texto[:300]
-       if len(self.texto)>300:
-          texto_corto+="..."
-       return f"""
-       <article class="col-md-4 mb-4">
-          <h4>{self.titulo}</h4>    
-          <p>{texto_corto}</p>
-          <hr>
-        </article>
-         """      
+    def to_html(self, archivo_articulo=None):
+        texto_corto = self.texto[:300]
+        if len(self.texto) > 300:
+            texto_corto += "..."
+        boton = f'<a href="{archivo_articulo}" class="btn btn-outline-primary mt-2">Leer más</a>' if archivo_articulo else ""
+        return f"""
+        <div class="col-md-4 mb-4">
+          <div class="card h-100">
+             <div class="card-body">
+               <h5 class="card-title">{self.titulo}</h5>
+               <p class="card-text">{texto_corto}</p>
+               {boton}
+             </div>
+          </div>
+        </div>
+        """   
     
     def es_valido(self):
        return all([self.titulo, self.autor, self.texto])  
@@ -64,15 +69,16 @@ class parser_html ():
         </nav>
         """   
 
-        cuerpo_articulos = "<div class='container mt-4'><div class='row'>"
+        cuerpo_articulos = "<div class='container mt-4'>"
         for autor, articulos in articulos_por_autor.items():
-           id_autor = autor.lower().replace(" ", "-")  
-           cuerpo_articulos += f'<section class="col-12 mb-4"><h3 id="{id_autor}">{autor}</h3></section>'
-           for articulo in articulos:
-              archivo_articulo=f"{articulo.titulo.lower().replace(' ','-')}.html"
-              self.guardar_articulo(articulo, archivo_articulo) 
-              cuerpo_articulos += f'<a href="{archivo_articulo}"class="col-md-4 mb-4">{articulo.titulo}</a><br>\n'
-        cuerpo_articulos += "</div></div>"
+            id_autor = autor.lower().replace(" ", "-")
+            cuerpo_articulos += f'<section class="mb-4"><h3 id="{id_autor}">{autor}</h3><div class="row">'
+            for articulo in articulos:
+                archivo_articulo = f"{articulo.titulo.lower().replace(' ', '-')}.html"
+                self.guardar_articulo(articulo, archivo_articulo)
+                cuerpo_articulos += articulo.to_html(archivo_articulo)
+            cuerpo_articulos += "</div></section>"
+        cuerpo_articulos += "</div>"
 
         fecha_actual= datetime.now().strftime("%d/%m/%Y") 
 
@@ -82,17 +88,20 @@ class parser_html ():
             <head>
                 <meta charset="UTF-8">
                 <title>Artículos de lectura</title>
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJ6vJ0nM6vT5lYbYPFHiFhvHIlz6mFf5T8F3BxsB7C60s6K+K6YcdXne/0jp" crossorigin="anonymous">
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
             </head>
             <body>    
                <header>
-                 <h1 class "text-center my-4">Artículos</h1>
+                 <h1 class = "text-center my-4">Artículos</h1>
                </header>  
                {indice_html}
                {cuerpo_articulos} 
                <footer> 
-                     <p class "text-center">Fecha de generación: {fecha_actual}</p>
-               </footer>         
+                     <p class = "text-center">Fecha de generación: {fecha_actual}</p>
+               </footer>    
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             </body> 
             </html>
         """ 
@@ -109,11 +118,12 @@ class parser_html ():
          <head>
             <meta charset="UTF-8">
             <title>{articulo.titulo}</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJ6vJ0nM6vT5lYbYPFHiFhvHIlz6mFf5T8F3BxsB7C60s6K+K6YcdXne/0jp" crossorigin="anonymous">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
          </head>
          <body>
             <header>
-               <h1 class="texto-center my-4">{articulo.titulo}</h1>
+               <h1 class="text-center my-4">{articulo.titulo}</h1>
                <h2 class="text-center">De: {articulo.autor}</h2>
             </header>
             <article class="container">
@@ -122,6 +132,8 @@ class parser_html ():
             <footer class="text-center mt-4">
               <a href="articulos.html" class="btn btn-primary">Volver al índice</a>
             </footer>  
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+   
          </body>
          </html>    
         """
