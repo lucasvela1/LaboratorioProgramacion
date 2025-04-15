@@ -17,7 +17,7 @@ colores, márgenes y tipografía básica.
 5) Separar los artículos por autor usando encabezados <h3>, generando una sección
 por autor con sus artículos debajo.
 6) Incluir al comienzo de la página un índice con enlaces a cada autor usando anchors
-internos (<a href="#autor-nombre">…</a>).
+internos >(<a href="#autor-nombre">…</a>).
 7) Reemplazar las tuplas por objetos de una clase Articulo con atributos titulo,
 autor, texto y un método to_html() que devuelva su representación.
 8) Agregar un método para filtrar por una palabra clave que devuelva solo los artículos
