@@ -1,0 +1,46 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 40px;
+    background-color: #b18b73;
+    color: #060101;
+}
+
+article {
+    background-color: rgb(155, 139, 139);
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+.btn-outline-secondary {
+    background-color: #d4af37; 
+    color: white;
+    border-color: #a67c00;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #a67c00;
+    color: white;
+    border-color: #8c6e00;
+}
+
+/* La tabla en si*/
+.table{
+    background-color: #0acb5b; 
+    color: rgb(147, 22, 22);
+    border-color: #000000;
+}
+
+/*Los encabezados de la tabla*/
+.table thead th {
+    background-color: #024b21;
+    color: rgb(92, 207, 10);
+}
+
+/*El cuerpo/celda de las tablas*/
+.table tbody td {
+    background-color: #282621d3;
+    color: rgb(0, 0, 0);
+}
