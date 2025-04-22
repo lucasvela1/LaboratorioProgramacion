@@ -1,5 +1,6 @@
 from datetime import datetime 
 from collections import defaultdict 
+import string
 
 def generar_footer(incluir_boton=True):
    año_actual = datetime.now().year
@@ -9,7 +10,7 @@ def generar_footer(incluir_boton=True):
         <p>{año_actual} - Tp2 de laboratorio, Lucas Vela</p>
         {boton}
     </footer>
-    '''  #Para el TP se pide un footer que se use en todas las paginas, por lo que se crea una funcion para generarlo, pero yo de preferencia hubiera creado dos footers distitos. Uno con el año, materia y nombre y el otro con fecha de creación del articulo
+    '''
 
 class ArticuloInvalidoErrror(Exception):  
    def __init__(self, mensaje): 
@@ -43,12 +44,28 @@ class Articulo:
           </div>
         </div>
         """   
-    
     def es_valido(self):
        return all([self.titulo, self.autor, self.texto])  
 
+def apellido(autor):
+    partes = autor.split() 
+    return partes[-1] if partes else autor  #Nos da el apellido del autor
 
-class Parser_html ():
+def inicial_apellido(autor):
+    return apellido(autor)[0].upper()  #Ponnos la inicial del apellido en mayuscula
+
+def generar_barra_alfabetica(autores):
+    letras_presentes = {inicial_apellido(autor) for autor in autores} #Las letras que se mostraran
+    barra = '<div class="text-center mb-4">\n' 
+    for letra in string.ascii_uppercase:
+        if letra in letras_presentes:  #Le pongo solo el anchor a las letras de los apellidos de los autores que si estan
+            barra += f'<a href="#letra-{letra}" class="btn btn-outline-dark btn-sm m-1">{letra}</a>'
+        else: #Si no esta en las letras presentes, le pongo un span para que no sea un link
+            barra += f'<span class="btn btn-outline-secondary btn-sm m-1 disabled">{letra}</span>'
+    barra += '\n</div>'
+    return barra
+
+class Parser_html():
     def __init__(self, articulos):
         self.articulos = self.normalizar_y_filtrar(articulos)
 
@@ -68,18 +85,19 @@ class Parser_html ():
              
     def generar_html(self):
 
-        articulos_por_autor=defaultdict(list)
+        articulos_por_autor = defaultdict(list)
         for articulo in self.articulos:
-          articulos_por_autor[articulo.autor].append(articulo)
+            articulos_por_autor[articulo.autor].append(articulo)
 
         todos_los_articulos = []
         for articulos in articulos_por_autor.values():
-          todos_los_articulos.extend(articulos)
+            todos_los_articulos.extend(articulos)
 
-        
-        tabla_autores="""
-        <div class= "container mb-4">
-             <h2>Cantidad de articulos por autor</h2>
+        barra_alfabetica = generar_barra_alfabetica(articulos_por_autor.keys())
+
+        tabla_autores = """
+        <div class="container mb-4">
+             <h2>Cantidad de artículos por autor</h2>
             <table class="table table-bordered table-striped"> 
                 <thead>
                   <tr>
@@ -90,23 +108,30 @@ class Parser_html ():
                 <tbody>
         """    
 
-        for autor,lista in articulos_por_autor.items():
-           id_autor=autor.lower().replace(" ","-")
-           tabla_autores+=f"<tr><td><a href=\"#{id_autor}\">{autor}</a></td><td>{len(lista)}</td></tr>\n"
-        tabla_autores+="""
+        for autor in sorted(articulos_por_autor.keys(), key=apellido): #Ordeno por apellido
+           id_autor = autor.lower().replace(" ", "-")
+           tabla_autores += f"<tr><td><a href=\"#{id_autor}\">{autor}</a></td><td>{len(articulos_por_autor[autor])}</td></tr>\n"
+        tabla_autores += """
                 </tbody>
             </table>
         </div>
         """
         
         cuerpo_articulos = "<div class='container mt-4'>"
-        for autor, articulos in articulos_por_autor.items():
+        letra_actual = ""
+
+        for autor in sorted(articulos_por_autor.keys(), key=apellido):
+            nueva_letra = inicial_apellido(autor)
+            if nueva_letra != letra_actual:
+                letra_actual = nueva_letra #Con esto se consgiue que el usuario pueda saltar de una letra a otra con la barra
+                cuerpo_articulos += f'<h4 id="letra-{letra_actual}" class="mt-4">{letra_actual}</h4>' 
+
             id_autor = autor.lower().replace(" ", "-")
             cuerpo_articulos += f'<section class="mb-4"><h3 id="{id_autor}">{autor}</h3><div class="row">'
-            for articulo in articulos:
+            for articulo in articulos_por_autor[autor]:
                 archivo_articulo = f"{articulo.titulo.lower().replace(' ', '-')}.html"
                 indice = todos_los_articulos.index(articulo)
-                self.guardar_articulo(articulo, archivo_articulo,todos_los_articulos,indice)
+                self.guardar_articulo(articulo, archivo_articulo, todos_los_articulos, indice)
                 cuerpo_articulos += articulo.to_html(archivo_articulo)
             cuerpo_articulos += "</div></section>"
         cuerpo_articulos += "</div>"
@@ -123,9 +148,10 @@ class Parser_html ():
             </head>
             <body>    
                <header>
-                 <h1 class = "text-center my-4">Artículos</h1>
+                 <h1 class="text-center my-4">Artículos</h1>
                  <img src="imagenLectura.jpg" alt="Imagen de lectura" class="img-fluid mx-auto d-block mb-4" style="max-width: 20%;">
                </header>  
+               {barra_alfabetica}
                {tabla_autores}
                {cuerpo_articulos} 
                {generar_footer(incluir_boton=False)}    
@@ -135,14 +161,13 @@ class Parser_html ():
         """ 
         return html
     
-    def guardar_html (self, nombre_archivo="articulos.html"):
+    def guardar_html(self, nombre_archivo="articulos.html"):
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
             archivo.write(self.generar_html()) 
 
-    def guardar_articulo(self, articulo, nombre_archivo,lista_articulos,indice):
-       
+    def guardar_articulo(self, articulo, nombre_archivo, lista_articulos, indice):
        enlace_anterior = ""
-       enlace_siguiente = "" #Si es el ultimo o primero, no se generara nada en el siguiente o anterior dependiendo de cual sea. Si es único no se genera ninguno
+       enlace_siguiente = ""
 
        if indice > 0:
           anterior = lista_articulos[indice - 1]
@@ -161,8 +186,7 @@ class Parser_html ():
        </div>
        """
 
-
-       html_articulo=f"""
+       html_articulo = f"""
          <!DOCTYPE html>
          <html lang="es">
          <head>
@@ -183,10 +207,8 @@ class Parser_html ():
             </article>
             {generar_footer()} 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-   
          </body>
          </html>    
         """
-       with open(nombre_archivo,"w", encoding="utf-8") as archivo:
+       with open(nombre_archivo, "w", encoding="utf-8") as archivo:
            archivo.write(html_articulo) 
-           
